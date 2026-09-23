@@ -8,19 +8,24 @@ canvas.height = 256;
 canvasCtx.fillStyle = "#13171f";
 canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
 
+/** @type {AudioContext} */
+let audioCtx;
+export let audioNodes = {};
+
 function start() {
-	const audioCtx = new AudioContext();
+	audioCtx = new AudioContext();
 
 	const analyser = audioCtx.createAnalyser(); // british spelling!
 	analyser.fftSize = 2048; // 1024 bins
+	analyser.smoothingTimeConstant = 0.6;
 	const bufferLength = analyser.frequencyBinCount;
 
 	canvas.width = bufferLength;
 	canvas.height = 256;
 
-	const player = audioCtx.createMediaElementSource(audioPlr);
-	player.connect(audioCtx.destination);
-	player.connect(analyser);
+	const outputNode = effectPipeline();
+	outputNode.connect(audioCtx.destination);
+	outputNode.connect(analyser);
 	const results = new Uint8Array(bufferLength);
 	function draw() {
 		window.requestAnimationFrame(draw);
@@ -70,3 +75,32 @@ audioSelector.addEventListener("change", () => {
 	}
 	audioPlr.play();
 });
+
+function effectPipeline() {
+	const player = audioCtx.createMediaElementSource(audioPlr);
+	audioNodes.player = player;
+	return panNodes(player);
+}
+
+function panNodes(inputNode) {
+	const pan = audioCtx.createStereoPanner();
+	inputNode.connect(pan);
+	const pingPong = audioCtx.createStereoPanner();
+	const osc = audioCtx.createOscillator();
+	const oscGain = audioCtx.createGain();
+	pan.connect(pingPong);
+	osc.frequency.value = 0.25;
+	oscGain.gain.value = 0.9;
+	osc.start();
+	osc.connect(oscGain);
+	oscGain.connect(pingPong.pan);
+	audioNodes.panNodes = {
+		pan,
+		pingPong: {
+			stereoPanner: pingPong,
+			osc,
+			oscGain,
+		},
+	};
+	return pingPong;
+}

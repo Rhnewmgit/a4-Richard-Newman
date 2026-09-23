@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="description" content="Audio effect playground made for Webware Assignment 3">
   <script src="js/main.js" type="module"></script>
+  <script src="js/fxControls.js" type="module"></script>
 
   <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"> -->
 
@@ -44,16 +45,22 @@
       <audio controls src="./audio/Carefree.mp3" controlslist="noplaybackrate" disabled></audio>
     </div>
     <div class="audioFXButtons">
-      <button type="button">Pan</button>
-    </div>
-    <div class="audioFXListContainer">
-      <ul>
+      <button type="button" id="panBtn">Pan</button>
+      <button type="button" id="EQBtn">EQ</button>
+      <button type="button" id="pitchTempoBtn">Pitch & Tempo</button>
+      <button type="button" id="bitcrusherBtn">Bitcrusher</button>
+      <button type="button" id="overdriveBtn">Overdrive</button>
+      <button type="button" id="reverbBtn">Reverb</button>
+      <button type="button" id="stereoDiffBtn">Stereo Difference</button>
 
-      </ul>
     </div>
-    <div class="audioDisplayContainer">
-      <canvas id="audioFreqCanv"></canvas>
+    <div class="audioDisplayAndControlsContainer">
+      <div class="audioDisplayContainer">
+        <canvas id="audioFreqCanv"></canvas>
+      </div>
+      <div class="audioFXControls"></div>
     </div>
+
   </main>
 
 </body>
