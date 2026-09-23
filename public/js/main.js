@@ -90,7 +90,7 @@ function panNodes(inputNode) {
 	const oscGain = audioCtx.createGain();
 	pan.connect(pingPong);
 	osc.frequency.value = 0.25;
-	oscGain.gain.value = 0.9;
+	oscGain.gain.value = 0;
 	osc.start();
 	osc.connect(oscGain);
 	oscGain.connect(pingPong.pan);

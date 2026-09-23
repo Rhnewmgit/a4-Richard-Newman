@@ -66,4 +66,10 @@ h1 {
 
 .audioFXControls {
   width: 50lvw;
+  margin: 5px;
+}
+
+footer .credits {
+  font-style: italic;
+  color: #bbbcc4;
 }
