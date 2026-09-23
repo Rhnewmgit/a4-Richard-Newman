@@ -6,15 +6,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="description" content="Audio effect playground made for Webware Assignment 3">
-  <script src="js/main.js" defer></script>
+  <script src="js/main.js" type="module"></script>
 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-  <!-- <link rel="stylesheet" href="css/pico.min.css"> -->
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"> -->
 
-  <link rel="stylesheet" href="css/main.min.css">
+
+  <link rel="stylesheet" href="css/main.css">
 
   <!-- get rid of favicon error -->
   <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
+
 </head>
 
 <body>
@@ -24,7 +29,31 @@
     </h1>
   </header>
   <main>
+    <div class="audioSelectorContainer">
+      <label for="audioSelector">Select a song:</label>
+      <select id="audioSelector">
+        <option value="Carefree.mp3">Carefree</option>
+        <option value="Local Forecast - Elevator.mp3">Local Forecast - Elevator</option>
+        <option value="Killers.mp3">Killers</option>
+        <option value="Who Likes to Party.mp3">Who Likes to Party</option>
+        <option value="upload">Upload your own!</option>
+      </select>
+      <input type="file" id="audioFileInput" accept="audio/*" />
+    </div>
+    <div class="audioPlayerContainer">
+      <audio controls src="./audio/Carefree.mp3" controlslist="noplaybackrate" disabled></audio>
+    </div>
+    <div class="audioFXButtons">
+      <button type="button">Pan</button>
+    </div>
+    <div class="audioFXListContainer">
+      <ul>
 
+      </ul>
+    </div>
+    <div class="audioDisplayContainer">
+      <canvas id="audioFreqCanv"></canvas>
+    </div>
   </main>
 
 </body>
