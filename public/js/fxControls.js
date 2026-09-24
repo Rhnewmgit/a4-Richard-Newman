@@ -4,6 +4,15 @@ import {audioNodes} from "./main.js";
 const paneContainer = document.querySelector(".audioFXControls");
 const canvasContainer = document.querySelector(".audioDisplayContainer");
 
+/**
+ * Gets the gain multiplier from a dB value
+ * @param {float} gain the dB gain
+ * @return the number to multiply to reach that gain
+ */
+function gainFromdB(gain) {
+	return 10 ** (gain / 10.0);
+}
+
 let pane = new Pane({container: paneContainer});
 
 function changePane(panefunc) {
@@ -51,15 +60,37 @@ function bitcrusherPane() {
 	pane.title = "Distiortion through limiting sample bits";
 	pane.addBinding(bitcrusherParams, "bits", {min: 1, max: 16});
 	pane.on("change", () => {
-		const discreteValues = 2.0 ** bits - 1;
+		const discreteValues = 2.0 ** bitcrusherParams.bits - 1;
 	});
 }
 function distortionPane() {
 	pane.title = "Distortion through clipping";
 	pane.addBinding(distortionParams, "enabled");
 	pane.addBinding(distortionParams, "drive", {min: 0, max: 40}).label = "drive (db)";
-	pane.addBinding(distortionParams, "gain", {min: -20, max: 20}).label = "post gain (db)";
-	pane.on("change", () => {});
+	pane.addBinding(distortionParams, "gain", {min: -40, max: 10}).label = "post gain (db)";
+	const compression = pane.addFolder({title: "compressor", expanded: true});
+	compression.addBinding(distortionParams, "threshold", {min: -60, max: 0}).label = "threshold (dB)";
+	compression.addBinding(distortionParams, "knee", {min: 0, max: 40}).label = "knee (dB)";
+	compression.addBinding(distortionParams, "ratio", {min: 1, max: 20}).label = "ratio (1:n reduction)";
+	pane.on("change", () => {
+		const distortionNodes = audioNodes.distortionNodes;
+		let driveGain = 1;
+		let postGain = 1;
+		let threshold = 0;
+		let ratio = 1;
+		if (distortionParams.enabled) {
+			driveGain = gainFromdB(distortionParams.drive);
+			postGain = gainFromdB(distortionParams.gain);
+			threshold = distortionParams.threshold;
+			ratio = distortionParams.ratio;
+		}
+		distortionNodes.drive.gain.value = driveGain;
+		// distortionNodes.normalize.gain.value = 1 / driveGain;
+		distortionNodes.postGain.gain.value = postGain;
+		distortionNodes.compressor.threshold.value = threshold;
+		distortionNodes.compressor.knee.value = distortionParams.knee;
+		distortionNodes.compressor.ratio.value = ratio;
+	});
 }
 function reverbPane() {
 	pane.title = "Echo effect";
@@ -109,6 +140,9 @@ const distortionParams = {
 	enabled: false,
 	drive: 0,
 	gain: 0,
+	threshold: 0,
+	knee: 0,
+	ratio: 20,
 };
 
 const reverbParams = {
