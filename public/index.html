@@ -39,18 +39,18 @@
         <option value="Who Likes to Party.mp3">Who Likes to Party</option>
         <option value="upload">Upload your own!</option>
       </select>
-      <input type="file" id="audioFileInput" accept="audio/*" />
+      <input type="file" id="audioFileInput" accept="audio/*" hidden />
     </div>
     <div class="audioPlayerContainer">
       <audio controls src="./audio/Carefree.mp3" controlslist="noplaybackrate nodownload" disabled></audio>
     </div>
     <div class="audioFXButtons">
+      <button type="button" id="pitchTempoBtn">Pitch & Tempo</button>
       <button type="button" id="panBtn">Pan</button>
       <button type="button" id="EQBtn">EQ</button>
-      <button type="button" id="pitchTempoBtn">Pitch & Tempo</button>
       <button type="button" id="bitcrusherBtn">Bitcrusher</button>
       <button type="button" id="distortionBtn">Distortion</button>
-      <button type="button" id="reverbBtn">Reverb</button>
+      <button type="button" id="echoBtn">Echo</button>
       <button type="button" id="stereoDiffBtn">Stereo Difference</button>
 
     </div>

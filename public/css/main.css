@@ -1,6 +1,7 @@
 :root {
   --default-background: #13171f;
   --menu-color: #3e3f44;
+  --purpley: #6c1ceb;
   color: white;
 }
 
@@ -17,11 +18,16 @@ body {
 main {
   margin: 8px;
   margin-bottom: 15lvh;
+
+  * {
+    margin-top: 3px;
+    margin-bottom: 3px;
+  }
 }
 
 header {
   border: 3px solid black;
-  background-color: #6c1ceb;
+  background-color: var(--purpley);
   color: white;
   text-align: center;
   text-shadow: -1px 1px 2px black;
@@ -41,6 +47,10 @@ header {
 
 h1 {
   margin: 4px 0;
+}
+
+button {
+  border: var(--purpley) inset 2px;
 }
 
 #audioFreqCanv {
@@ -73,4 +83,10 @@ h1 {
 footer .credits {
   font-style: italic;
   color: #bbbcc4;
+}
+
+.audioFXButtons {
+  display: flex;
+  justify-content: space-between;
+
 }

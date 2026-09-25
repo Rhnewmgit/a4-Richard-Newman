@@ -12,17 +12,19 @@ canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
 let audioCtx;
 
 export let audioNodes = {
+	audioPlr,
+	playerNode: {},
 	panNodes: {},
 	eqNodes: {},
-	pitchTempoNodes: {},
 	bitcrusherNodes: {},
 	distortionNodes: {},
-	reverbNodes: {},
+	echoNodes: {},
 	stereoDiffNodes: {},
 };
 
-function start() {
+async function start() {
 	audioCtx = new AudioContext();
+	await audioCtx.audioWorklet.addModule("./js/audioProcessors.js");
 
 	const analyser = audioCtx.createAnalyser(); // british spelling!
 	analyser.fftSize = 2048; // 1024 bins
@@ -61,8 +63,9 @@ window.onclick = () => {
 
 let inputAudioUrl;
 
-document.querySelector("#audioFileInput").addEventListener("change", (e) => {
-	const file = e.target.files[0];
+const audioFileInput = document.querySelector("#audioFileInput");
+audioFileInput.addEventListener("change", () => {
+	const file = audioFileInput.files[0];
 	if (!file) {
 		return;
 	}
@@ -72,17 +75,20 @@ document.querySelector("#audioFileInput").addEventListener("change", (e) => {
 	inputAudioUrl = URL.createObjectURL(file);
 	audioPlr.src = inputAudioUrl;
 	audioPlr.load();
+	audioPlr.play();
 });
 
 const audioSelector = document.querySelector("#audioSelector");
 audioSelector.addEventListener("change", () => {
 	const selected = audioSelector.value;
 	if (selected === "upload") {
+		audioFileInput.removeAttribute("hidden");
 		audioPlr.src = inputAudioUrl;
 	} else {
+		audioFileInput.setAttribute("hidden", true);
 		audioPlr.src = `./audio/${selected}`;
+		audioPlr.play();
 	}
-	audioPlr.play();
 });
 
 /**
@@ -91,14 +97,13 @@ audioSelector.addEventListener("change", () => {
  */
 function effectPipeline() {
 	const player = audioCtx.createMediaElementSource(audioPlr);
-	audioNodes.player = player;
+	audioNodes.playerNode = player;
 	const panned = panNodes(player);
 	const eq = eqNodes(panned);
-	const pitchTempo = pitchTempoNodes(eq);
-	const bitcrusher = bitcrusherNodes(pitchTempo);
+	const bitcrusher = bitcrusherNodes(eq);
 	const distortion = distortionNodes(bitcrusher);
-	const reverb = reverbNodes(distortion);
-	const stereoDiff = stereoDiffNodes(reverb);
+	const echo = echoNodes(distortion);
+	const stereoDiff = stereoDiffNodes(echo);
 	return stereoDiff;
 }
 
@@ -161,23 +166,23 @@ function eqNodes(inputNode) {
 }
 
 /**
- * Apply the pitch and tempo effects and add the used nodes to audioNodes
- * @param {AudioNode} inputNode a node to apply the effects to
- * @returns an AudioNode with the pitch and tempo effects applied
- */
-function pitchTempoNodes(inputNode) {
-	audioNodes.pitchTempoNodes = {};
-	return inputNode;
-}
-
-/**
  * Apply the bitcrusher effect and add the used nodes to audioNodes
  * @param {AudioNode} inputNode a node to apply the effects to
  * @returns an AudioNode with the bitcrusher effects applied
  */
 function bitcrusherNodes(inputNode) {
-	audioNodes.bitcrusherNodes = {};
-	return inputNode;
+	let preGain = new GainNode(audioCtx, {gain: 1});
+	let bitcrusher = new AudioWorkletNode(audioCtx, "bitcrusher-processor");
+	bitcrusher.parameters.get("bits").value = 16;
+	let postGain = new GainNode(audioCtx, {gain: 1});
+	inputNode.connect(preGain).connect(bitcrusher).connect(postGain);
+	audioNodes.bitcrusherNodes = {
+		preGain,
+		bitcrusher,
+		postGain,
+	};
+
+	return postGain;
 }
 
 /**
@@ -210,12 +215,25 @@ function distortionNodes(inputNode) {
 }
 
 /**
- * Apply the reverb effect and add the used nodes to audioNodes
+ * Apply the echo effect and add the used nodes to audioNodes
  * @param {AudioNode} inputNode a node to apply the effects to
- * @returns an AudioNode with the reverb effects applied
+ * @returns an AudioNode with the echo effects applied
  */
-function reverbNodes(inputNode) {
-	audioNodes.reverbNodes = {};
+function echoNodes(inputNode) {
+	const delay = new DelayNode(audioCtx, {
+		delayTime: 0.5,
+		maxDelayTime: 10,
+	});
+	const feedback = new GainNode(audioCtx, {
+		gain: 0,
+	});
+	inputNode.connect(delay);
+	delay.connect(feedback);
+	feedback.connect(inputNode);
+	audioNodes.echoNodes = {
+		delay,
+		feedback,
+	};
 	return inputNode;
 }
 
@@ -225,6 +243,14 @@ function reverbNodes(inputNode) {
  * @returns an AudioNode with the stereo difference effect applied
  */
 function stereoDiffNodes(inputNode) {
-	audioNodes.stereoDiffNodes = {};
-	return inputNode;
+	let stereoDiff = new AudioWorkletNode(audioCtx, "stereodiff-processor");
+	stereoDiff.parameters.get("passthrough").value = true;
+	let postGain = new GainNode(audioCtx, {gain: 1});
+	inputNode.connect(stereoDiff).connect(postGain);
+	audioNodes.stereoDiffNodes = {
+		stereoDiff,
+		postGain,
+	};
+
+	return postGain;
 }

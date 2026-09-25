@@ -53,7 +53,7 @@ function panPane() {
 }
 
 function eqPane() {
-	pane.title = "Apply a lowpass or highpass filter";
+	pane.title = "Apply lowpass, highpass, and bandpass filters";
 	pane.addBinding(eqParams, "enabled");
 	pane.addBinding(eqParams, "lowpass", {min: 0, max: 24000}).label = "lowpass (hz)";
 	pane.addBinding(eqParams, "highpass", {min: 0, max: 24000}).label = "highpass (hz)";
@@ -82,19 +82,34 @@ function eqPane() {
 
 function pitchTempoPane() {
 	pane.title = "Change pitch & tempo";
-	pane.addBinding(pitchTempoParams, "pitch").label = "pitch (cents)";
-	pane.addBinding(pitchTempoParams, "tempo", {min: 0});
+	pane.addBinding(pitchTempoParams, "preservePitch").label = "preserve pitch";
+	pane.addBinding(pitchTempoParams, "playbackRate", {min: 0, max: 16}).label = "playback rate";
 	pane.on("change", () => {
-		const pitchTempoNodes = audioNodes.pitchTempoNodes;
+		const audioPlr = audioNodes.audioPlr;
+		audioPlr.preservesPitch = pitchTempoParams.preservePitch;
+		audioPlr.playbackRate = pitchTempoParams.playbackRate;
 	});
 }
 
 function bitcrusherPane() {
 	pane.title = "Distiortion through limiting sample bits";
+	pane.addBinding(bitcrusherParams, "enabled");
+	pane.addBinding(bitcrusherParams, "preGain", {min: -10, max: 40}).label = "pre gain (db)";
 	pane.addBinding(bitcrusherParams, "bits", {min: 1, max: 16});
+	pane.addBinding(bitcrusherParams, "postGain", {min: -40, max: 10}).label = "post gain (db)";
 	pane.on("change", () => {
 		const bitcrusherNodes = audioNodes.bitcrusherNodes;
-		const discreteValues = 2.0 ** bitcrusherParams.bits - 1;
+		let bits = 16;
+		let preGain = 1;
+		let postGain = 1;
+		if (bitcrusherParams.enabled) {
+			bits = bitcrusherParams.bits;
+			preGain = gainFromdB(bitcrusherParams.preGain);
+			postGain = gainFromdB(bitcrusherParams.postGain);
+		}
+		bitcrusherNodes.bitcrusher.parameters.get("bits").value = bits;
+		bitcrusherNodes.preGain.gain.value = preGain;
+		bitcrusherNodes.postGain.gain.value = postGain;
 	});
 }
 
@@ -128,21 +143,32 @@ function distortionPane() {
 	});
 }
 
-function reverbPane() {
+function echoPane() {
 	pane.title = "Echo effect";
-	pane.addBinding(reverbParams, "enabled");
-	pane.addBinding(reverbParams, "decay", {min: 0, max: 1});
-	pane.addBinding(reverbParams, "decay", {min: 0}).label = "delay (ms)";
+	pane.addBinding(echoParams, "enabled");
+	pane.addBinding(echoParams, "delay", {min: 0, max: 10000}).label = "delay (ms)";
+	pane.addBinding(echoParams, "feedback", {min: 0, max: 1});
 	pane.on("change", () => {
-		const reverbNodes = audioNodes.reverbNodes;
+		const echoNodes = audioNodes.echoNodes;
+		let feedback = 0;
+		if (echoParams.enabled) {
+			feedback = echoParams.feedback;
+		}
+		echoNodes.delay.delayTime.value = echoParams.delay / 1000;
+		echoNodes.feedback.gain.value = feedback;
 	});
 }
 
 function stereoDifferencePane() {
 	pane.title = "Output only the difference between L and R channels";
 	pane.addBinding(stereoDifferenceParams, "enabled");
+	pane.addBinding(stereoDifferenceParams, "postGain", {min: -10, max: 40}).label = "post gain (db)";
 	pane.on("change", () => {
 		const stereoDiffNodes = audioNodes.stereoDiffNodes;
+		const stereoDiff = stereoDiffNodes.stereoDiff;
+		stereoDiff.parameters.get("passthrough").value = !stereoDifferenceParams.enabled;
+		const postGain = stereoDiffNodes.postGain;
+		postGain.gain.value = gainFromdB(stereoDifferenceParams.postGain);
 	});
 }
 
@@ -151,7 +177,7 @@ document.querySelector("#EQBtn").addEventListener("click", () => changePane(eqPa
 document.querySelector("#pitchTempoBtn").addEventListener("click", () => changePane(pitchTempoPane));
 document.querySelector("#bitcrusherBtn").addEventListener("click", () => changePane(bitcrusherPane));
 document.querySelector("#distortionBtn").addEventListener("click", () => changePane(distortionPane));
-document.querySelector("#reverbBtn").addEventListener("click", () => changePane(reverbPane));
+document.querySelector("#echoBtn").addEventListener("click", () => changePane(echoPane));
 document.querySelector("#stereoDiffBtn").addEventListener("click", () => changePane(stereoDifferencePane));
 
 const panParams = {
@@ -173,13 +199,15 @@ const eqParams = {
 };
 
 const pitchTempoParams = {
-	pitch: 0,
-	tempo: 1,
+	preservePitch: true,
+	playbackRate: 1,
 };
 
 const bitcrusherParams = {
 	enabled: false,
-	bits: 4,
+	preGain: 0,
+	bits: 16,
+	postGain: 0,
 };
 
 const distortionParams = {
@@ -191,14 +219,15 @@ const distortionParams = {
 	ratio: 20,
 };
 
-const reverbParams = {
+const echoParams = {
 	enabled: false,
-	decay: 0,
-	delay: 100,
+	delay: 150,
+	feedback: 0.4,
 };
 
 const stereoDifferenceParams = {
 	enabled: false,
+	postGain: 0,
 };
 
 window.addEventListener("load", () => hidePane());
