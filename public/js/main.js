@@ -93,9 +93,13 @@ function effectPipeline() {
 	const player = audioCtx.createMediaElementSource(audioPlr);
 	audioNodes.player = player;
 	const panned = panNodes(player);
-	const eq = eqNodes(player);
-	const distorted = distortionNodes(panned);
-	return distorted;
+	const eq = eqNodes(panned);
+	const pitchTempo = pitchTempoNodes(eq);
+	const bitcrusher = bitcrusherNodes(pitchTempo);
+	const distortion = distortionNodes(bitcrusher);
+	const reverb = reverbNodes(distortion);
+	const stereoDiff = stereoDiffNodes(reverb);
+	return stereoDiff;
 }
 
 /**
@@ -133,13 +137,27 @@ function panNodes(inputNode) {
  */
 function eqNodes(inputNode) {
 	const lowpass = new BiquadFilterNode(audioCtx, {
+		type: "lowpass",
 		frequency: 24000,
 	});
 	const highpass = new BiquadFilterNode(audioCtx, {
-		frequency: -1000,
+		type: "highpass",
+		frequency: 0,
 	});
-
-	audioNodes.eqNodes = {};
+	const bandpass = new BiquadFilterNode(audioCtx, {
+		type: "bandpass",
+		frequency: 8000,
+		Q: -100,
+	});
+	inputNode.connect(lowpass);
+	lowpass.connect(highpass);
+	highpass.connect(bandpass);
+	audioNodes.eqNodes = {
+		lowpass,
+		highpass,
+		bandpass,
+	};
+	return bandpass;
 }
 
 /**
@@ -149,6 +167,7 @@ function eqNodes(inputNode) {
  */
 function pitchTempoNodes(inputNode) {
 	audioNodes.pitchTempoNodes = {};
+	return inputNode;
 }
 
 /**
@@ -158,6 +177,7 @@ function pitchTempoNodes(inputNode) {
  */
 function bitcrusherNodes(inputNode) {
 	audioNodes.bitcrusherNodes = {};
+	return inputNode;
 }
 
 /**
@@ -196,6 +216,7 @@ function distortionNodes(inputNode) {
  */
 function reverbNodes(inputNode) {
 	audioNodes.reverbNodes = {};
+	return inputNode;
 }
 
 /**
@@ -205,4 +226,5 @@ function reverbNodes(inputNode) {
  */
 function stereoDiffNodes(inputNode) {
 	audioNodes.stereoDiffNodes = {};
+	return inputNode;
 }

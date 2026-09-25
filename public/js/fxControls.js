@@ -15,6 +15,10 @@ function gainFromdB(gain) {
 
 let pane = new Pane({container: paneContainer});
 
+/**
+ * Change the current audio effect pane to the provided one
+ * @param {function} panefunc
+ */
 function changePane(panefunc) {
 	pane.dispose();
 	pane = new Pane({container: paneContainer});
@@ -24,6 +28,9 @@ function changePane(panefunc) {
 	pane.addButton({title: "Hide"}).on("click", hidePane);
 }
 
+/**
+ * Hide the audio effect pane
+ */
 function hidePane() {
 	paneContainer.setAttribute("hidden", true);
 	canvasContainer.style.width = "100lvw";
@@ -48,21 +55,49 @@ function panPane() {
 function eqPane() {
 	pane.title = "Apply a lowpass or highpass filter";
 	pane.addBinding(eqParams, "enabled");
-	pane.on("change", () => {});
+	pane.addBinding(eqParams, "lowpass", {min: 0, max: 24000}).label = "lowpass (hz)";
+	pane.addBinding(eqParams, "highpass", {min: 0, max: 24000}).label = "highpass (hz)";
+	const bandpass = pane.addFolder({title: "Bandpass", expanded: true});
+	bandpass.addBinding(eqParams.bandpass, "enabled");
+	bandpass.addBinding(eqParams.bandpass, "frequency", {min: 0, max: 24000}).label = "frequency (hz)";
+	bandpass.addBinding(eqParams.bandpass, "Q", {min: 0}).label = "Q (width)";
+	pane.on("change", () => {
+		const eqNodes = audioNodes.eqNodes;
+		let lowpass = 24000;
+		let highpass = 0;
+		let Q = -1000;
+		if (eqParams.enabled) {
+			lowpass = eqParams.lowpass;
+			highpass = eqParams.highpass;
+			if (eqParams.bandpass.enabled) {
+				Q = eqParams.bandpass.Q;
+			}
+		}
+		eqNodes.lowpass.frequency.value = lowpass;
+		eqNodes.highpass.frequency.value = highpass;
+		eqNodes.bandpass.frequency.value = eqParams.bandpass.frequency;
+		eqNodes.bandpass.Q.value = Q;
+	});
 }
+
 function pitchTempoPane() {
 	pane.title = "Change pitch & tempo";
 	pane.addBinding(pitchTempoParams, "pitch").label = "pitch (cents)";
 	pane.addBinding(pitchTempoParams, "tempo", {min: 0});
-	pane.on("change", () => {});
+	pane.on("change", () => {
+		const pitchTempoNodes = audioNodes.pitchTempoNodes;
+	});
 }
+
 function bitcrusherPane() {
 	pane.title = "Distiortion through limiting sample bits";
 	pane.addBinding(bitcrusherParams, "bits", {min: 1, max: 16});
 	pane.on("change", () => {
+		const bitcrusherNodes = audioNodes.bitcrusherNodes;
 		const discreteValues = 2.0 ** bitcrusherParams.bits - 1;
 	});
 }
+
 function distortionPane() {
 	pane.title = "Distortion through clipping";
 	pane.addBinding(distortionParams, "enabled");
@@ -92,17 +127,23 @@ function distortionPane() {
 		distortionNodes.compressor.ratio.value = ratio;
 	});
 }
+
 function reverbPane() {
 	pane.title = "Echo effect";
 	pane.addBinding(reverbParams, "enabled");
 	pane.addBinding(reverbParams, "decay", {min: 0, max: 1});
 	pane.addBinding(reverbParams, "decay", {min: 0}).label = "delay (ms)";
-	pane.on("change", () => {});
+	pane.on("change", () => {
+		const reverbNodes = audioNodes.reverbNodes;
+	});
 }
+
 function stereoDifferencePane() {
 	pane.title = "Output only the difference between L and R channels";
 	pane.addBinding(stereoDifferenceParams, "enabled");
-	pane.on("change", () => {});
+	pane.on("change", () => {
+		const stereoDiffNodes = audioNodes.stereoDiffNodes;
+	});
 }
 
 document.querySelector("#panBtn").addEventListener("click", () => changePane(panPane));
@@ -122,8 +163,13 @@ const panParams = {
 
 const eqParams = {
 	enabled: false,
-	lowpass: 100,
-	highpass: 2000,
+	lowpass: 24000,
+	highpass: 0,
+	bandpass: {
+		enabled: true,
+		frequency: 8000,
+		Q: 0.5,
+	},
 };
 
 const pitchTempoParams = {
