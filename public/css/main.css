@@ -1,6 +1,6 @@
 :root {
   --default-background: #13171f;
-  --menu-color: #3e3f44;
+  --menu-color: #2b1a46;
   --purpley: #6c1ceb;
   color: white;
 }
@@ -49,8 +49,8 @@ h1 {
   margin: 4px 0;
 }
 
-button {
-  border: var(--purpley) inset 2px;
+audio {
+  color: var(--menu-color);
 }
 
 #audioFreqCanv {
@@ -83,10 +83,28 @@ button {
 footer .credits {
   font-style: italic;
   color: #bbbcc4;
+  margin-top: 150px;
 }
 
 .audioFXButtons {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
 
+  button {
+    padding: 5px 2px;
+    width: max(12lvw, 75px);
+
+  }
+}
+
+select,
+input,
+.audioFXButtons button {
+  border: var(--purpley) outset 2px;
+  background-color: var(--menu-color);
+  color: #eeeeee;
+  text-shadow: -1px 1px 2px black;
+  font-weight: bold;
+  text-align: center;
 }

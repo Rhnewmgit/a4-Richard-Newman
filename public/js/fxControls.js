@@ -69,9 +69,9 @@ function eqPane() {
 		if (eqParams.enabled) {
 			lowpass = eqParams.lowpass;
 			highpass = eqParams.highpass;
-			if (eqParams.bandpass.enabled) {
-				Q = eqParams.bandpass.Q;
-			}
+		}
+		if (eqParams.bandpass.enabled) {
+			Q = eqParams.bandpass.Q;
 		}
 		eqNodes.lowpass.frequency.value = lowpass;
 		eqNodes.highpass.frequency.value = highpass;
@@ -192,7 +192,7 @@ const eqParams = {
 	lowpass: 24000,
 	highpass: 0,
 	bandpass: {
-		enabled: true,
+		enabled: false,
 		frequency: 8000,
 		Q: 0.5,
 	},
